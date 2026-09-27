@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "lexer.h"
 #include <memory>
 #include <vector>
@@ -116,6 +116,7 @@ struct MemberAssignment : ASTNode {
 struct Program : ASTNode { std::vector<std::shared_ptr<ASTNode>> statements; void print(int i) const override {} };
 
 class Parser {
+    friend int main(int argc, char* argv[]);
 private:
     std::vector<Token> tokens; size_t current;
     Token& peek(); Token& advance(); bool isAtEnd(); bool check(YTokenType type); bool match(YTokenType type);

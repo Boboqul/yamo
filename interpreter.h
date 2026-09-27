@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "sqlite3.h"
 #include "parser.h"
 #include <unordered_map>
@@ -54,6 +54,7 @@ public:
     bool toBool() const override { return true; }
 };
 class Interpreter {
+    friend int main(int argc, char* argv[]);
     std::unordered_set<std::string> importedModules;
     void importModule(const std::string& path);
     std::string currentDir;

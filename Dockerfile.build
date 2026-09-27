@@ -1,0 +1,7 @@
+FROM alpine:latest
+RUN apk add --no-cache build-base git
+WORKDIR /src
+COPY . .
+RUN cc -O2 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -c sqlite3.c -o sqlite3.o && \
+    g++ -O2 -std=c++17 main.cpp lexer.cpp parser.cpp interpreter.cpp all_stubs.cpp sqlite3.o -o yamo-alpine -static -lpthread -lm
+CMD ["./yamo-alpine", "--help"]
