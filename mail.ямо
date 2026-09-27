@@ -1,0 +1,174 @@
+текст email = ввод();
+текст parol = ввод();
+
+текст forma = "email=" + email + "&password=" + parol;
+
+текст javob = http_отправить(
+    "https://mail.harakatda.com/api/login.php",
+    forma,
+    "POST"
+);
+
+если (javob == "") {
+    вывод "API dan javob kelmadi.";
+} иначе {
+
+    словарь data = json_разобрать(javob);
+
+    если (data["ok"] != истина) {
+        вывод "Xato: " + data["error"];
+    } иначе {
+
+        текст token = data["token"];
+
+        текст sentJavob = http_отправить(
+            "https://mail.harakatda.com/api/sent.php",
+            "",
+            "GET",
+            token
+        );
+
+        словарь sentData = json_разобрать(sentJavob);
+
+        текст html = "
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>Harakatda Mail</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.header {
+    background: #009900;
+    color: white;
+    padding: 18px 25px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.layout {
+    display: flex;
+    min-height: 500px;
+}
+
+.sidebar {
+    width: 220px;
+    background: white;
+    padding: 20px;
+}
+
+.menu {
+    display: block;
+    padding: 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #222;
+}
+
+.menu:hover {
+    background: #eeeeee;
+}
+
+.main {
+    flex: 1;
+    padding: 25px;
+}
+
+.mail {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+}
+
+.subject {
+    font-weight: bold;
+    font-size: 17px;
+}
+
+.info {
+    color: #666;
+    margin-top: 5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class='header'>
+    Harakatda Mail
+</div>
+
+<div class='layout'>
+
+<div class='sidebar'>
+
+<a class='menu' href='#'>✏️ Jo'zish</a>
+<a class='menu' href='#'>📥 Kiruvchi</a>
+<a class='menu' href='#'>📤 Jo'natilgan</a>
+<a class='menu' href='#'>📝 Qoralama</a>
+<a class='menu' href='#'>⭐ Muhim</a>
+<a class='menu' href='#'>🗑️ Spam</a>
+<a class='menu' href='#'>🗑️ Savat</a>
+
+</div>
+
+<div class='main'>
+
+<h2>📤 Jo'natilgan</h2>
+";
+
+        если (sentData["ok"] != истина) {
+
+            html = html + "
+<p>Xato: " + sentData["error"] + "</p>
+";
+
+        } иначе {
+
+            массив messages = sentData["messages"];
+            целое son = длина(messages);
+
+            если (son == 0) {
+
+                html = html + "
+<p>Hozircha jo'natilgan xatlar yo'q.</p>
+";
+
+            } иначе {
+
+                для (целое i = 0; i < son; i = i + 1) {
+
+                    словарь msg = messages[i];
+
+                    html = html + "
+<div class='mail'>
+<div class='subject'>" + msg["subject"] + "</div>
+<div class='info'>Kimga: " + msg["to"] + "</div>
+<div class='info'>Sana: " + msg["date"] + "</div>
+</div>
+";
+                }
+            }
+        }
+
+        html = html + "
+</div>
+</div>
+
+</body>
+</html>
+";
+
+        браузер_показать(html);
+    }
+}

@@ -1,0 +1,11 @@
+yamo.exe
+sqlite3.o
+*.db
+.yamo_cache/
+release/
+yamo.exe
+sqlite3.o
+*.o
+yamo.exe
+release/
+yamo

@@ -1,0 +1,37 @@
+{
+    "name": "yamo-language",
+    "displayName": "ЯМО Language",
+    "description": "Поддержка языка программирования ЯМО (Язык Машинного Общения)",
+    "version": "1.0.0",
+    "icon": "icons/logo.png",
+    "publisher": "yamo",
+    "engines": {
+      "vscode": "^1.50.0"
+    },
+    "categories": [
+      "Programming Languages"
+    ],
+    "contributes": {
+      "languages": [
+        {
+          "id": "yamo",
+          "aliases": [
+            "ЯМО",
+            "YAMO",
+            "yamo"
+          ],
+          "extensions": [
+            ".ямо"
+          ],
+          "configuration": "./language-configuration.json"
+        }
+      ],
+      "grammars": [
+        {
+          "language": "yamo",
+          "scopeName": "source.yamo",
+          "path": "./syntaxes/yamo.tmLanguage.json"
+        }
+      ]
+    }
+  }

@@ -1,0 +1,72 @@
+// Bozor - генератор интернет-магазина на языке ЯМО
+
+функция страница_товара(текст название, текст цена, текст категория, текст описание) {
+    текст html = "";
+    html = html + "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n<meta charset=\"UTF-8\">\n";
+    html = html + "<title>" + название + " - Bozor</title>\n<style>\n";
+    html = html + "body{font-family:Arial;max-width:800px;margin:40px auto;padding:20px}\n";
+    html = html + ".price{font-size:32px;color:#e63946;font-weight:bold}\n";
+    html = html + ".cat{color:#666;font-style:italic}\n";
+    html = html + ".back{display:inline-block;margin-top:30px;color:#2196F3}\n";
+    html = html + "</style>\n</head>\n<body>\n";
+    html = html + "<h1>" + название + "</h1>\n";
+    html = html + "<p class=\"cat\">" + категория + "</p>\n";
+    html = html + "<p class=\"price\">" + цена + " сум</p>\n";
+    html = html + "<p>" + описание + "</p>\n";
+    html = html + "<a class=\"back\" href=\"../index.html\">← Назад к каталогу</a>\n";
+    html = html + "</body>\n</html>\n";
+    вернуть html;
+}
+
+функция главная() {
+    вывод "=== Bozor: Генератор сайта ===";
+    
+    текст содержимое = читать_файл("bozor/products.txt");
+    текст[] строки = разделить(содержимое, "\n");
+    
+    целое всего = 0;
+    текст карточки = "";
+    
+    // Генерируем карточки товаров
+    для (целое i = 0; i < длина(строки); i = i + 1) {
+        если (длина(строки[i]) > 0) {
+            текст[] f = разделить(строки[i], "|");
+            если (длина(f) >= 5) {
+                всего = всего + 1;
+                
+                целое r = запись_файл("bozor/output/products/" + f[0] + ".html", страница_товара(f[1], f[2], f[3], f[4]));
+                вывод "  + " + f[0] + ".html (r=" + r + ")";
+                
+                карточки = карточки + "<div class=\"card\"><h2>" + f[1] + "</h2>";
+                карточки = карточки + "<p class=\"price\">" + f[2] + " сум</p>";
+                карточки = карточки + "<p>" + f[4] + "</p>";
+                карточки = карточки + "<a href=\"products/" + f[0] + ".html\">Подробнее →</a></div>\n";
+            }
+        }
+    }
+    вывод "Найдено товаров: " + всего;
+    
+    // Главная страница
+    текст главная = "";
+    главная = главная + "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n<meta charset=\"UTF-8\">\n";
+    главная = главная + "<title>Bozor - Интернет-магазин</title>\n<style>\n";
+    главная = главная + "body{font-family:Arial;max-width:1000px;margin:40px auto;padding:20px;background:#f5f5f5}\n";
+    главная = главная + "h1{color:#1d3557;text-align:center}\n";
+    главная = главная + ".products{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}\n";
+    главная = главная + ".card{background:white;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}\n";
+    главная = главная + ".card h2{margin:0 0 10px;font-size:20px}\n";
+    главная = главная + ".price{color:#e63946;font-weight:bold;font-size:22px}\n";
+    главная = главная + ".card a{color:#2196F3;text-decoration:none}\n";
+    главная = главная + "</style>\n</head>\n<body>\n";
+    главная = главная + "<h1>🛒 Bozor — Интернет-магазин</h1>\n";
+    главная = главная + "<p style=\"text-align:center\">Всего товаров: " + всего + "</p>\n";
+    главная = главная + "<div class=\"products\">\n" + карточки + "</div>\n";
+    главная = главная + "<p style=\"text-align:center;color:#999\">Сгенерировано на языке ЯМО</p>\n";
+    главная = главная + "</body>\n</html>\n";
+    
+    целое r2 = запись_файл("bozor/output/index.html", главная);
+    вывод "index.html (r=" + r2 + ")";
+    
+    вывод "=== Готово! ===";
+    вывод "Открой bozor/output/index.html в браузере!";
+}

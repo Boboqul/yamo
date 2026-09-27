@@ -1,0 +1,23 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: deps (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+      - name: build (Unix)
+        if: runner.os != 'Windows'
+        run: make && ./yamo test_json.ямо
+      - name: build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          gcc -c sqlite3.c -o sqlite3.o -O2 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
+          g++ -O2 main.cpp lexer.cpp parser.cpp interpreter.cpp sqlite3.o -o yamo.exe -lwinhttp -luser32 -lgdi32
+          .\yamo.exe test_json.ямо

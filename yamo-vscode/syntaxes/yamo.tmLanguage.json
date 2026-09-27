@@ -1,0 +1,61 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "YAMO",
+    "scopeName": "source.yamo",
+    "patterns": [
+        { "include": "#comments" },
+        { "include": "#keywords" },
+        { "include": "#io" },
+        { "include": "#types" },
+        { "include": "#functions" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#boolean" }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                { "name": "comment.line.double-slash.yamo", "match": "//.*$" },
+                { "name": "comment.block.yamo", "begin": "/\\*", "end": "\\*/" }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                { "name": "keyword.control.yamo", "match": "\\b(если|иначе_если|иначе|для|пока|вернуть|функция|прервать|продолжить|класс|новый|этот|расширяет)\\b" }
+            ]
+        },
+        "io": {
+            "patterns": [
+                { "name": "keyword.other.yamo", "match": "\\b(вывод|пиши|ввод)\\b" }
+            ]
+        },
+        "types": {
+            "patterns": [
+                { "name": "storage.type.yamo", "match": "\\b(целое|дробное|текст|логическое)\\b" }
+            ]
+        },
+        "functions": {
+            "patterns": [
+                { "name": "support.function.yamo", "match": "\\b(читать_файл|запись_файл|дописать_файл|существует_файл|удалить_файл|длина|разделить|в_число|случайное|модуль|округлить|степень|корень|мин|макс|верхний_регистр|нижний_регистр|содержит|заменить|начинается_с|заканчивается_на|часть|найти|повторить)\\b" }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.yamo",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                { "name": "constant.character.escape.yamo", "match": "\\\\." }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                { "name": "constant.numeric.yamo", "match": "\\b\\d+(\\.\\d+)?\\b" }
+            ]
+        },
+        "boolean": {
+            "patterns": [
+                { "name": "constant.language.yamo", "match": "\\b(истина|ложь)\\b" }
+            ]
+        }
+    }
+}

@@ -1,0 +1,78 @@
+текст email = ввод();
+текст parol = ввод();
+
+текст forma = "email=" + email + "&password=" + parol;
+
+текст javob = http_отправить(
+    "https://mail.harakatda.com/api/login.php",
+    forma,
+    "POST"
+);
+
+если (javob == "") {
+    вывод "API dan javob kelmadi.";
+} иначе {
+
+    словарь data = json_разобрать(javob);
+
+    если (data["ok"] != истина) {
+        вывод "Xato: " + data["error"];
+    } иначе {
+
+        текст token = data["token"];
+
+        вывод "Kirish muvaffaqiyatli.";
+        вывод "";
+
+        текст sentJavob = http_отправить(
+            "https://mail.harakatda.com/api/sent.php",
+            "",
+            "GET",
+            token
+        );
+
+        словарь sentData = json_разобрать(sentJavob);
+
+        если (sentData["ok"] != истина) {
+
+            вывод "Xato: " + sentData["error"];
+
+        } иначе {
+
+            вывод "Papka: " + sentData["folder"];
+            вывод "============================";
+
+            массив messages = sentData["messages"];
+
+            целое son = длина(messages);
+
+            если (son == 0) {
+
+                вывод "Jo'natilgan xatlar yo'q.";
+
+            } иначе {
+
+                для (целое i = 0; i < son; i = i + 1) {
+
+                    словарь msg = messages[i];
+
+                    вывод "";
+                    вывод "[" + (i + 1) + "]";
+                    вывод "Kimga: " + msg["to"];
+                    вывод "Mavzu: " + msg["subject"];
+                    вывод "Sana: " + msg["date"];
+
+                    массив attachments = msg["attachments"];
+
+                    если (длина(attachments) > 0) {
+                        вывод "Fayllar: " + длина(attachments);
+                    } иначе {
+                        вывод "Fayllar: yo'q";
+                    }
+
+                    вывод "----------------------------";
+                }
+            }
+        }
+    }
+}

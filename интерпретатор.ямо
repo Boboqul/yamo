@@ -1,0 +1,277 @@
+// ============================================================
+//  интерпретатор.ямо — исполняет AST на чистом ЯМО
+// ============================================================
+импорт "парсер.ямо";
+
+функция выполнить_код(текст src) {
+    массив toks = tokenize(src);
+    словарь ast = разбор_программы(новое_состояние(), toks); // ИСПРАВЛЕНО
+    словарь state = json_разобрать("{}");
+    вернуть eval_program(state, ast);
+}
+
+функция sig_none() { словарь d = json_разобрать("{}"); d["flow"] = "none"; вернуть d; }
+функция sig_return(словарь v) { словарь d = json_разобрать("{}"); d["flow"] = "return"; d["v"] = v; вернуть d; }
+функция sig_break() { словарь d = json_разобрать("{}"); d["flow"] = "break"; вернуть d; }
+функция sig_cont() { словарь d = json_разобрать("{}"); d["flow"] = "continue"; вернуть d; }
+
+функция new_env(словарь parent) {
+    словарь e = json_разобрать("{}");
+    e["parent"] = parent;
+    вернуть e;
+}
+функция env_get(словарь env, текст name) {
+    словарь cur = env;
+    пока (истина) {
+        если (содержит_ключ(cur, name)) { вернуть cur[name]; }
+        если (содержит_ключ(cur, "parent")) { cur = cur["parent"]; }
+        иначе { ошибка("Переменная не определена: " + name); }
+    }
+}
+функция env_set(словарь env, текст name, словарь v) {
+    словарь cur = env;
+    пока (истина) {
+        если (содержит_ключ(cur, name)) { cur[name] = v; вернуть 0; }
+        если (содержит_ключ(cur, "parent")) { cur = cur["parent"]; }
+        иначе { ошибка("Переменная не определена: " + name); }
+    }
+}
+
+функция kind_of(словарь v) {
+    текст j = json_собрать(v);
+    если (j == "true" или j == "false") { вернуть "bool"; }
+    если (j == "null") { вернуть "null"; }
+    если (начинается_с(j, "\"")) { вернуть "text"; }
+    если (начинается_с(j, "[")) { вернуть "array"; }
+    если (начинается_с(j, "{")) { вернуть "dict"; }
+    вернуть "num";
+}
+функция truthy(словарь v) {
+    текст j = json_собрать(v);
+    если (j == "false" или j == "null" или j == "0" или j == "\"\"") { вернуть ложь; }
+    вернуть истина;
+}
+
+функция host_call(текст name, массив args) {
+    если (name == "длина") { вернуть длина(args[0]); }
+    если (name == "добавить") { вернуть добавить(args[0], args[1]); }
+    если (name == "часть") { вернуть часть(args[0], args[1], args[2]); }
+    если (name == "содержит") { вернуть содержит(args[0], args[1]); }
+    если (name == "найти") { вернуть найти(args[0], args[1]); }
+    если (name == "заменить") { вернуть заменить(args[0], args[1], args[2]); }
+    если (name == "разделить") { вернуть разделить(args[0], args[1]); }
+    если (name == "повторить") { вернуть повторить(args[0], args[1]); }
+    если (name == "верхний_регистр") { вернуть верхний_регистр(args[0]); }
+    если (name == "нижний_регистр") { вернуть нижний_регистр(args[0]); }
+    если (name == "в_число") { вернуть в_число(args[0]); }
+    если (name == "в_текст") { вернуть в_текст(args[0]); }
+    если (name == "начинается_с") { вернуть начинается_с(args[0], args[1]); }
+    если (name == "заканчивается_на") { вернуть заканчивается_на(args[0], args[1]); }
+    если (name == "json_разобрать") { вернуть json_разобрать(args[0]); }
+    если (name == "json_собрать") { вернуть json_собрать(args[0]); }
+    если (name == "ключи") { вернуть ключи(args[0]); }
+    если (name == "значения") { вернуть значения(args[0]); }
+    если (name == "содержит_ключ") { вернуть содержит_ключ(args[0], args[1]); }
+    если (name == "модуль") { вернуть модуль(args[0]); }
+    если (name == "округлить") { вернуть округлить(args[0]); }
+    если (name == "степень") { вернуть степень(args[0], args[1]); }
+    если (name == "корень") { вернуть корень(args[0]); }
+    если (name == "мин") { вернуть мин(args[0], args[1]); }
+    если (name == "макс") { вернуть макс(args[0], args[1]); }
+    если (name == "случайное") { вернуть случайное(args[0], args[1]); }
+    если (name == "синус") { вернуть синус(args[0]); }
+    если (name == "косинус") { вернуть косинус(args[0]); }
+    ошибка("Неизвестная функция в интерпретаторе: " + name);
+}
+
+функция eval_expr(словарь state, словарь env, словарь n) {
+    текст kind = n["kind"];
+    если (kind == "num") { вернуть n["v"]; }
+    если (kind == "str") { вернуть n["v"]; }
+    если (kind == "bool") { если (n["v"] == 1) { вернуть истина; } вернуть ложь; }
+    если (kind == "var") { вернуть env_get(env, n["name"]); }
+    если (kind == "not") { вернуть не truthy(eval_expr(state, env, n["x"])); }
+    если (kind == "neg") { вернуть 0 - eval_expr(state, env, n["x"]); }
+    если (kind == "array") {
+        массив out = [];
+        словарь elems = n["elems"];
+        целое i = 0;
+        пока (i < длина(elems)) { добавить(out, eval_expr(state, env, elems[i])); i = i + 1; }
+        вернуть out;
+    }
+    если (kind == "index") {
+        словарь base = eval_expr(state, env, n["arr"]);
+        словарь idx = eval_expr(state, env, n["index"]);
+        вернуть base[idx];
+    }
+    если (kind == "field") {
+        словарь base = eval_expr(state, env, n["obj"]);
+        вернуть base[n["name"]];
+    }
+    если (kind == "bin") {
+        словарь l = eval_expr(state, env, n["l"]);
+        текст op = n["op"];
+        если (op == "и") { если (не truthy(l)) { вернуть ложь; } вернуть truthy(eval_expr(state, env, n["r"])); }
+        если (op == "или") { если (truthy(l)) { вернуть истина; } вернуть truthy(eval_expr(state, env, n["r"])); }
+        словарь r = eval_expr(state, env, n["r"]);
+        текст kl = kind_of(l);
+        текст kr = kind_of(r);
+        если (op == "+") {
+            если (kl == "text" или kr == "text") { вернуть в_текст(l) + в_текст(r); }
+            если (kl == "array" и kr == "array") { вернуть l + r; }
+            вернуть l + r;
+        }
+        если (kl == "num" и kr == "num") {
+            если (op == "-") { вернуть l - r; }
+            если (op == "*") { вернуть l * r; }
+            если (op == "/") { вернуть l / r; }
+            если (op == "%") { вернуть l % r; }
+            если (op == "==") { вернуть l == r; }
+            если (op == "!=") { вернуть l != r; }
+            если (op == "<") { вернуть l < r; }
+            если (op == ">") { вернуть l > r; }
+            если (op == "<=") { вернуть l <= r; }
+            если (op == ">=") { вернуть l >= r; }
+        }
+        если (op == "==") { вернуть в_текст(l) == в_текст(r); }
+        если (op == "!=") { вернуть в_текст(l) != в_текст(r); }
+        если (op == "<") { вернуть в_текст(l) < в_текст(r); }
+        если (op == ">") { вернуть в_текст(l) > в_текст(r); }
+        если (op == "<=") { вернуть в_текст(l) <= в_текст(r); }
+        если (op == ">=") { вернуть в_текст(l) >= в_текст(r); }
+        ошибка("Неподдерживаемая операция: " + op);
+    }
+    если (kind == "call") {
+        текст name = n["name"];
+        массив args = [];
+        словарь an = n["args"];
+        целое i = 0;
+        пока (i < длина(an)) { добавить(args, eval_expr(state, env, an[i])); i = i + 1; }
+        если (содержит_ключ(state["funcs"], name)) {
+            словарь func = state["funcs"][name];
+            словарь fenv = new_env(state["global"]);
+            словарь ps = func["params"];
+            целое k = 0;
+            пока (k < длина(ps)) { fenv[ps[k]["name"]] = args[k]; k = k + 1; }
+            словарь r = eval_stmts(state, fenv, func["body"]);
+            если (r["flow"] == "return") { вернуть r["v"]; }
+            вернуть 0;
+        }
+        вернуть host_call(name, args);
+    }
+    ошибка("Неизвестный узел AST: " + kind);
+}
+
+функция eval_stmts(словарь state, словарь env, словарь body) {
+    целое i = 0;
+    пока (i < длина(body)) {
+        словарь r = eval_stmt(state, env, body[i]);
+        если (r["flow"] != "none") { вернуть r; }
+        i = i + 1;
+    }
+    вернуть sig_none();
+}
+
+функция eval_stmt(словарь state, словарь env, словарь node) {
+    текст kind = node["kind"];
+    если (kind == "noop") { вернуть sig_none(); }
+    если (kind == "print") { вывод eval_expr(state, env, node["v"]); вернуть sig_none(); }
+    если (kind == "printnn") { пиши eval_expr(state, env, node["v"]); вернуть sig_none(); }
+    если (kind == "func") { state["funcs"][node["name"]] = node; вернуть sig_none(); }
+    если (kind == "vardecl") {
+        словарь v = 0;
+        если (содержит_ключ(node, "value")) { v = eval_expr(state, env, node["value"]); }
+        иначе_если (node["type"] == "текст") { v = ""; }
+        иначе_если (node["type"] == "логическое") { v = ложь; }
+        env_define_local(env, node["name"], v);
+        вернуть sig_none();
+    }
+    если (kind == "assign") { env_set(env, node["name"], eval_expr(state, env, node["value"])); вернуть sig_none(); }
+    если (kind == "index_assign") {
+        словарь target = eval_expr(state, env, node["arr"]);
+        словарь idx = eval_expr(state, env, node["index"]);
+        словарь val = eval_expr(state, env, node["value"]);
+        target[idx] = val;
+        вернуть sig_none();
+    }
+    если (kind == "field_assign") {
+        словарь target = eval_expr(state, env, node["obj"]);
+        словарь val = eval_expr(state, env, node["value"]);
+        target[node["name"]] = val;
+        вернуть sig_none();
+    }
+    если (kind == "if") {
+        если (truthy(eval_expr(state, env, node["cond"]))) {
+            вернуть eval_stmts(state, env, node["then"]);
+        }
+        словарь elifs = node["elifs"];
+        целое i = 0;
+        пока (i < длина(elifs)) {
+            если (truthy(eval_expr(state, env, elifs[i]["cond"]))) {
+                вернуть eval_stmts(state, env, elifs[i]["body"]);
+            }
+            i = i + 1;
+        }
+        если (содержит_ключ(node, "else")) {
+            вернуть eval_stmts(state, env, node["else"]);
+        }
+        вернуть sig_none();
+    }
+    если (kind == "while") {
+        пока (truthy(eval_expr(state, env, node["cond"]))) {
+            словарь r = eval_stmts(state, env, node["body"]);
+            если (r["flow"] == "return") { вернуть r; }
+            если (r["flow"] == "break") { прервать; }
+        }
+        вернуть sig_none();
+    }
+    если (kind == "for") {
+        если (содержит_ключ(node, "init")) { eval_stmt(state, env, node["init"]); }
+        пока (истина) {
+            если (содержит_ключ(node, "cond")) {
+                если (не truthy(eval_expr(state, env, node["cond"]))) { прервать; }
+            }
+            словарь r = eval_stmts(state, env, node["body"]);
+            если (r["flow"] == "return") { вернуть r; }
+            если (r["flow"] == "break") { прервать; }
+            если (содержит_ключ(node, "inc")) { eval_stmt(state, env, node["inc"]); }
+        }
+        вернуть sig_none();
+    }
+    если (kind == "return") {
+        если (содержит_ключ(node, "v")) { вернуть sig_return(eval_expr(state, env, node["v"])); }
+        вернуть sig_return(0);
+    }
+    если (kind == "break") { вернуть sig_break(); }
+    если (kind == "continue") { вернуть sig_cont(); }
+    если (kind == "expr") { eval_expr(state, env, node["v"]); вернуть sig_none(); }
+    ошибка("Неизвестный оператор: " + kind);
+}
+
+функция env_define_local(словарь env, текст name, словарь v) {
+    env[name] = v;
+    вернуть 0;
+}
+
+функция eval_program(словарь state, словарь prog) {
+    state["funcs"] = json_разобрать("{}");
+    state["global"] = json_разобрать("{}");
+    словарь body = prog["body"];
+    целое i = 0;
+    пока (i < длина(body)) {
+        если (body[i]["kind"] == "func") { state["funcs"][body[i]["name"]] = body[i]; }
+        i = i + 1;
+    }
+    eval_stmts(state, state["global"], body);
+    
+    // Автозапуск функции "главная", если она определена (как делает хост-ЯМО)
+    если (содержит_ключ(state["funcs"], "главная")) {
+        словарь call_node = json_разобрать("{}");
+        call_node["kind"] = "call";
+        call_node["name"] = "главная";
+        call_node["args"] = [];
+        eval_expr(state, state["global"], call_node);
+    }
+    вернуть sig_none();
+}
+

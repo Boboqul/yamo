@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>Bozor - Интернет-магазин</title>
+        <style>
+        body{
+            font-family:Arial;
+            max-width:1000px;
+            margin:40px auto;
+            padding:20px;
+            background:#f5f5f5}
+        h1{
+            color:#1d3557;
+            text-align:center}
+        .products{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:20px}
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:8px;
+            box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .card h2{
+            margin:0 0 10px;
+            font-size:20px}
+        .price{
+            color:#e63946;
+            font-weight:bold;
+            font-size:22px}
+        .card a{
+            color:#2196F3;
+            text-decoration:none}
+        </style>
+    </head>
+    <body>
+        <h1>🛒 Bozor — Интернет-магазин</h1>
+        <p style="text-align:center">Всего товаров: 6</p>
+        <div class="products">
+            <div class="card">
+                <h2>Ноутбук HP ProBook</h2>
+                <p class="price">4500 сум</p>
+                <p>Мощный ноутбук для работы и учёбы</p>
+                <a href="products/laptop.html">Подробнее →</a>
+            </div>
+            <div class="card">
+                <h2>Смартфон Samsung A54</h2>
+                <p class="price">2800 сум</p>
+                <p>Отличный телефон с хорошей камерой</p>
+                <a href="products/phone.html">Подробнее →</a>
+            </div>
+            <div class="card">
+                <h2>Книга "Язык ЯМО"</h2>
+                <p class="price">120 сум</p>
+                <p>Первый учебник по программированию на ЯМО</p>
+                <a href="products/book.html">Подробнее →</a>
+            </div>
+            <div class="card">
+                <h2>Зелёный чай "Кок"</h2>
+                <p class="price">45 сум</p>
+                <p>Узбекский чай высшего сорта, 250г</p>
+                <a href="products/tea.html">Подробнее →</a>
+            </div>
+            <div class="card">
+                <h2>Ковёр ручной работы</h2>
+                <p class="price">8500 сум</p>
+                <p>Традиционный бухарский ковёр, 2x3м</p>
+                <a href="products/carpet.html">Подробнее →</a>
+            </div>
+            <div class="card">
+                <h2>Пчак узбекский</h2>
+                <p class="price">350 сум</p>
+                <p>Национальный нож с рукоятью из кости</p>
+                <a href="products/knife.html">Подробнее →</a>
+            </div>
+        </div>
+        <p style="text-align:center;color:#999">Сгенерировано на языке ЯМО</p>
+    </body>
+</html>
